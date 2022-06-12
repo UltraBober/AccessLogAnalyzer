@@ -1,3 +1,63 @@
 <?php
-echo 'Hellow World!'
-?>
+
+echo analyzeAccessLog(getopt('', array('file::',))['file']);
+
+/**
+ * @param string $accessLogFileName
+ * @return string|null
+ */
+function analyzeAccessLog($accessLogFileName) {
+    if ($accessLog = fopen($accessLogFileName, 'r')) {
+        $result = [
+            'views' => 0,
+            'urls' => 0,
+            'traffic' => 0,
+            'crawlers' => [
+                'Google' => 0,
+                'Bing' => 0,
+                'Baidu' => 0,
+                'Yandex' => 0,
+            ],
+            'statusCodes' => []
+        ];
+        $accessRecordPattern = '/(\S+) (\S+) (\S+) \[([^:]+):(\d+:\d+:\d+) ([^\]]+)\] \"(\S+) (.*?) (\S+)\" (\S+) (\S+) (\".*?\") (\".*?\")/';
+        $crawlersPattern = "/bot|google|yandex|bing|baidu/i";
+        $remoteIPs = [];
+        $accessLogLineNumber = 0;
+        while (feof($accessLog) === false) {
+            $accessLogLineNumber ++;
+            if ($accessLogLine = trim(fgets($accessLog))) {
+                if (preg_match($accessRecordPattern, $accessLogLine, $accessLine)) {
+                    $result['views'] ++;
+                    $accessRecord['ip'] = $accessLine[1];
+                    $accessRecord['status'] = $accessLine[10];
+                    $accessRecord['bytes'] = $accessLine[11];
+                    $accessRecord['agent'] = $accessLine[13];
+                    if (array_search($accessRecord['ip'], $remoteIPs) === false) {
+                        $remoteIPs[] = $accessRecord['ip'];
+                        $result['urls'] ++;
+                    }
+                    $result['traffic'] += $accessRecord['bytes'];
+                    if (array_key_exists($accessRecord['status'], $result['statusCodes']) === false) {
+                        $result['statusCodes'][$accessRecord['status']] = 1;
+                    } else {
+                        $result['statusCodes'][$accessRecord['status']] ++;
+                    }
+                    if (preg_match($crawlersPattern, $accessRecord['agent'], $crawler) === false) {
+                        if (!array_key_exists($crawler, $result['crawlers'])) {
+                            $result['crawlers'][$crawler] = 1;
+                        } else {
+                            $result['crawlers'][$crawler] ++;
+                        }
+                    }
+                } else {
+                    error_log("Warning! Unformated access log line with number $accessLogLineNumber found: '$accessLogLine'");
+                }
+            }
+        }
+        fclose($accessLog);
+        return json_encode($result, JSON_PRETTY_PRINT);
+    } else {
+        return null;
+    }
+}
