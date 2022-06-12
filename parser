@@ -21,7 +21,7 @@ function analyzeAccessLog($accessLogFileName) {
             'statusCodes' => []
         ];
         $accessRecordPattern = '/(\S+) (\S+) (\S+) \[([^:]+):(\d+:\d+:\d+) ([^\]]+)\] \"(\S+) (.*?) (\S+)\" (\S+) (\S+) (\".*?\") (\".*?\")/';
-        $crawlersPattern = "/bot|google|yandex|bing|baidu/i";
+        $crawlersPattern = "/bot|google|bing|baidu|yandex/i";
         $remoteIPs = [];
         $accessLogLineNumber = 0;
         while (feof($accessLog) === false) {
