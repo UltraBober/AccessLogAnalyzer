@@ -21,7 +21,7 @@ function analyzeAccessLog($accessLogFileName) {
             'statusCodes' => []
         ];
         $accessRecordPattern = '/(\S+) (\S+) (\S+) \[([^:]+):(\d+:\d+:\d+) ([^\]]+)\] \"(\S+) (.*?) (\S+)\" (\S+) (\S+) (\".*?\") (\".*?\")/';
-        $crawlersPattern = "/bot|google|bing|baidu|yandex/i";
+        $crawlersPattern = '/bot|Google|Bing|Baidu|Yandex/i';
         $remoteIPs = [];
         $accessLogLineNumber = 0;
         while (feof($accessLog) === false) {
@@ -43,11 +43,11 @@ function analyzeAccessLog($accessLogFileName) {
                     } else {
                         $result['statusCodes'][$accessRecord['status']] ++;
                     }
-                    if (preg_match($crawlersPattern, $accessRecord['agent'], $crawler) === false) {
-                        if (!array_key_exists($crawler, $result['crawlers'])) {
-                            $result['crawlers'][$crawler] = 1;
+                    if (preg_match($crawlersPattern, $accessRecord['agent'], $crawler)) {
+                        if (array_key_exists($crawler[0], $result['crawlers']) === false) {
+                            $result['crawlers'][$crawler[0]] = 1;
                         } else {
-                            $result['crawlers'][$crawler] ++;
+                            $result['crawlers'][$crawler[0]] ++;
                         }
                     }
                 } else {
